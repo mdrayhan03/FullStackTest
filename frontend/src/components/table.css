@@ -1,0 +1,80 @@
+.table-container {
+  width: 90%;
+  margin: 20px auto;
+  padding: 20px;
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.table-container h2 {
+  text-align: center;
+  margin-bottom: 15px;
+  font-size: 22px;
+  color: #333;
+}
+
+.styled-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 16px;
+  overflow: hidden;
+  border-radius: 6px;
+}
+
+.styled-table thead {
+  background: #4caf50;
+  color: white;
+}
+
+.styled-table th,
+.styled-table td {
+  padding: 12px 15px;
+  border: 1px solid #dddddd;
+  text-align: left;
+}
+
+.styled-table tr:nth-child(even) {
+  background: #f3f3f3;
+}
+
+.styled-table tr:hover {
+  background-color: #e1ffe1;
+  color: #000;
+  transition: 0.3s;
+}
+
+/* Pagination */
+.pagination {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+}
+
+.pagination button {
+  padding: 8px 20px;
+  border: none;
+  background: #4caf50;
+  color: white;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 15px;
+}
+
+.pagination button:hover {
+  background-color: #e1ffe1;
+  color: #000;
+  transition: 0.3s;
+}
+
+.pagination button:disabled {
+  background: #9ccc9c;
+  cursor: not-allowed;
+}
+
+.pagination span {
+  font-size: 16px;
+  color: #333;
+}
