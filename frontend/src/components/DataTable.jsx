@@ -1,19 +1,21 @@
 import React, { useState } from "react";
 import "./table.css";
+import jsonData from "../data/stock_market_data.json";
 
-const DataTable = ({ data }) => {
+const DataTable = () => {
+  const data = jsonData; // local variable
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 10;
 
+  if (!data || data.length === 0) {
+    return <h2 style={{ textAlign: "center" }}>No JSON data available</h2>;
+  }
+
   const totalPages = Math.ceil(data.length / rowsPerPage);
 
-  const handlePrev = () => {
-    setCurrentPage((prev) => Math.max(prev - 1, 1));
-  };
-
-  const handleNext = () => {
+  const handlePrev = () => setCurrentPage((prev) => Math.max(prev - 1, 1));
+  const handleNext = () =>
     setCurrentPage((prev) => Math.min(prev + 1, totalPages));
-  };
 
   const startIndex = (currentPage - 1) * rowsPerPage;
   const paginatedData = data.slice(startIndex, startIndex + rowsPerPage);
@@ -42,7 +44,6 @@ const DataTable = ({ data }) => {
         </tbody>
       </table>
 
-      {/* Pagination Controls */}
       <div className="pagination">
         <button onClick={handlePrev} disabled={currentPage === 1}>
           Prev
