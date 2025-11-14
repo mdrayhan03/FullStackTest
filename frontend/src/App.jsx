@@ -1,12 +1,11 @@
 import React from "react";
-import stockData from "./data/stock_market_data.json";
-import DataTable from "./components/DataTable";
+import DataTableSQL from "./components/DataTableSQL";
 
 function App() {
   return (
     <div>
-      <h1 style={{ textAlign: "center" }}>JSON Model - Stock Dashboard</h1>
-      <DataTable data={stockData} />
+      <h1 style={{textAlign:"center", marginTop: "50px"}}>Supabase SQL Model - Stock Dashboard</h1>
+      <DataTableSQL />
     </div>
   );
 }
