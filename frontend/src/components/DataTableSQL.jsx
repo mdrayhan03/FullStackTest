@@ -6,19 +6,24 @@ import {
   BarElement,
   PointElement,
   LineElement,
+  BarController,
+  LineController,
   Title,
   Tooltip,
   Legend,
 } from "chart.js";
-import { Chart } from "react-chartjs-2";
+import { Chart, Line } from "react-chartjs-2";
 import "./tablesql.css";
 
+// Register all necessary Chart.js components
 ChartJS.register(
   CategoryScale,
   LinearScale,
   BarElement,
   PointElement,
   LineElement,
+  BarController,
+  LineController,
   Title,
   Tooltip,
   Legend
@@ -46,12 +51,12 @@ export default function DataTable() {
     volume: "",
   });
   const [addError, setAddError] = useState("");
-  const [chartTradeCode, setChartTradeCode] = useState(""); // right chart
+  const [chartTradeCode, setChartTradeCode] = useState("");
   const [chartTimeFrame, setChartTimeFrame] = useState("day");
-  const [leftTradeCode1, setLeftTradeCode1] = useState(""); // left chart comparison
+  const [leftTradeCode1, setLeftTradeCode1] = useState("");
   const [leftTradeCode2, setLeftTradeCode2] = useState("");
 
-  // Fetch data
+  // Fetch data from backend
   useEffect(() => {
     async function getData() {
       try {
@@ -76,17 +81,12 @@ export default function DataTable() {
     getData();
   }, []);
 
-  // Trade Codes list
   const tradeCodes = [...new Set(rows.map((r) => r.trade_code))];
 
-  // Search filter using selected trade code
+  // Filter
   useEffect(() => {
-    if (!search) {
-      setFiltered(rows); // show all if no selection
-    } else {
-      const f = rows.filter((r) => r.trade_code === search);
-      setFiltered(f);
-    }
+    if (!search) setFiltered(rows);
+    else setFiltered(rows.filter((r) => r.trade_code === search));
     setPage(1);
   }, [search, rows]);
 
@@ -107,7 +107,7 @@ export default function DataTable() {
   const totalPages = Math.ceil(filtered.length / rowsPerPage);
   const paginated = filtered.slice((page - 1) * rowsPerPage, page * rowsPerPage);
 
-  // Inline edit
+  // Inline Edit
   function startEdit(row) {
     setEditingId(row.id);
     setEditRow({ ...row });
@@ -142,13 +142,12 @@ export default function DataTable() {
     }
   }
 
-  // Add stock
+  // Add Stock
   function validateNewStock(stock) {
     stock.trade_code = stock.trade_code.toUpperCase();
     if (!stock.date || isNaN(new Date(stock.date).getTime())) return "Invalid date.";
     const floatFields = ["open", "high", "low", "close"];
-    for (let field of floatFields)
-      if (isNaN(parseFloat(stock[field]))) return `${field} must be a valid number.`;
+    for (let field of floatFields) if (isNaN(parseFloat(stock[field]))) return `${field} must be a valid number.`;
     if (!Number.isInteger(Number(stock.volume))) return "Volume must be an integer.";
     return null;
   }
@@ -184,7 +183,7 @@ export default function DataTable() {
     }
   }
 
-  // Right/Main chart aggregation
+  // Right chart data
   let chartDataRows = rows
     .filter((r) => r.trade_code === chartTradeCode)
     .map((r) => ({ ...r, date: new Date(r.date) }));
@@ -211,14 +210,10 @@ export default function DataTable() {
         return acc;
       }, {})
     ).map((r) => ({ ...r, close: r.close / r.count }));
-  } else {
-    chartDataRows.sort((a, b) => a.date - b.date);
-  }
+  } else chartDataRows.sort((a, b) => a.date - b.date);
 
   const rightChartData = {
-    labels: chartDataRows.map((r) =>
-      r.date instanceof Date ? r.date.toISOString().split("T")[0] : r.date
-    ),
+    labels: chartDataRows.map((r) => (r.date instanceof Date ? r.date.toISOString().split("T")[0] : r.date)),
     datasets: [
       {
         type: "line",
@@ -245,18 +240,12 @@ export default function DataTable() {
     plugins: { legend: { position: "top" } },
     scales: {
       y: { type: "linear", display: true, position: "left", title: { display: true, text: "Close Price" } },
-      y1: {
-        type: "linear",
-        display: true,
-        position: "right",
-        title: { display: true, text: "Volume" },
-        grid: { drawOnChartArea: false },
-      },
+      y1: { type: "linear", display: true, position: "right", title: { display: true, text: "Volume" }, grid: { drawOnChartArea: false } },
       x: { title: { display: true, text: "Date" } },
     },
   };
 
-  // Left chart data (comparison of two trade_codes)
+  // Left chart data
   const leftDataRows1 = rows.filter((r) => r.trade_code === leftTradeCode1);
   const leftDataRows2 = rows.filter((r) => r.trade_code === leftTradeCode2);
   const allDates = [...new Set([...leftDataRows1, ...leftDataRows2].map((r) => r.date))].sort();
@@ -264,112 +253,47 @@ export default function DataTable() {
   const leftChartData = {
     labels: allDates,
     datasets: [
-      {
-        label: `${leftTradeCode1} Open`,
+      ...["Open", "Close", "High", "Low"].map((field, idx) => ({
+        label: `${leftTradeCode1} ${field}`,
         data: allDates.map((d) => {
           const row = leftDataRows1.find((r) => r.date === d);
-          return row ? row.open : null;
+          return row ? row[field.toLowerCase()] : null;
         }),
-        borderColor: "blue",
+        borderColor: ["blue", "green", "red", "orange"][idx],
         tension: 0.2,
-      },
-      {
-        label: `${leftTradeCode1} Close`,
-        data: allDates.map((d) => {
-          const row = leftDataRows1.find((r) => r.date === d);
-          return row ? row.close : null;
-        }),
-        borderColor: "green",
-        tension: 0.2,
-      },
-      {
-        label: `${leftTradeCode1} High`,
-        data: allDates.map((d) => {
-          const row = leftDataRows1.find((r) => r.date === d);
-          return row ? row.high : null;
-        }),
-        borderColor: "red",
-        tension: 0.2,
-      },
-      {
-        label: `${leftTradeCode1} Low`,
-        data: allDates.map((d) => {
-          const row = leftDataRows1.find((r) => r.date === d);
-          return row ? row.low : null;
-        }),
-        borderColor: "orange",
-        tension: 0.2,
-      },
-      {
-        label: `${leftTradeCode2} Open`,
+      })),
+      ...["Open", "Close", "High", "Low"].map((field, idx) => ({
+        label: `${leftTradeCode2} ${field}`,
         data: allDates.map((d) => {
           const row = leftDataRows2.find((r) => r.date === d);
-          return row ? row.open : null;
+          return row ? row[field.toLowerCase()] : null;
         }),
-        borderColor: "blue",
+        borderColor: ["blue", "green", "red", "orange"][idx],
         borderDash: [5, 5],
         tension: 0.2,
-      },
-      {
-        label: `${leftTradeCode2} Close`,
-        data: allDates.map((d) => {
-          const row = leftDataRows2.find((r) => r.date === d);
-          return row ? row.close : null;
-        }),
-        borderColor: "green",
-        borderDash: [5, 5],
-        tension: 0.2,
-      },
-      {
-        label: `${leftTradeCode2} High`,
-        data: allDates.map((d) => {
-          const row = leftDataRows2.find((r) => r.date === d);
-          return row ? row.high : null;
-        }),
-        borderColor: "red",
-        borderDash: [5, 5],
-        tension: 0.2,
-      },
-      {
-        label: `${leftTradeCode2} Low`,
-        data: allDates.map((d) => {
-          const row = leftDataRows2.find((r) => r.date === d);
-          return row ? row.low : null;
-        }),
-        borderColor: "orange",
-        borderDash: [5, 5],
-        tension: 0.2,
-      },
+      })),
     ],
   };
 
-  const leftChartOptions = {
-    responsive: true,
-    plugins: { legend: { position: "top" } },
-    scales: { x: { title: { display: true, text: "Date" } }, y: { title: { display: true, text: "Price" } } },
-  };
+  const leftChartOptions = { responsive: true, plugins: { legend: { position: "top" } }, scales: { x: { title: { display: true, text: "Date" } }, y: { title: { display: true, text: "Price" } } } };
 
   return (
     <div className="table-container">
-      {/* Charts */}
       <div className="charts-container">
-        {/* Left Chart */}
         <div className="left-chart">
-          <h3>Comparison Chart (Two Trade Codes)</h3>
+          <h3>Comparison Chart</h3>
           <div className="chart-controls">
-            <label>Trade Code 1</label>
+            <label>Trade Code 1:</label>
             <select value={leftTradeCode1} onChange={(e) => setLeftTradeCode1(e.target.value)}>
               {tradeCodes.map((tc) => <option key={tc} value={tc}>{tc}</option>)}
             </select>
-            <label>Trade Code 2</label>
+            <label>Trade Code 2:</label>
             <select value={leftTradeCode2} onChange={(e) => setLeftTradeCode2(e.target.value)}>
               {tradeCodes.map((tc) => <option key={tc} value={tc}>{tc}</option>)}
             </select>
           </div>
-          <Chart type="line" data={leftChartData} options={leftChartOptions} />
+          <Line data={leftChartData} options={leftChartOptions} />
         </div>
-
-        {/* Right/Main Chart */}
         <div className="right-chart">
           <h3>Stock Price & Volume</h3>
           <div className="chart-controls">
@@ -377,14 +301,14 @@ export default function DataTable() {
             <select value={chartTradeCode} onChange={(e) => setChartTradeCode(e.target.value)}>
               {tradeCodes.map((tc) => <option key={tc} value={tc}>{tc}</option>)}
             </select>
-            <label>Time Aggregation:</label>
+            <label>Time:</label>
             <select value={chartTimeFrame} onChange={(e) => setChartTimeFrame(e.target.value)}>
               <option value="day">Day</option>
               <option value="month">Month</option>
               <option value="year">Year</option>
             </select>
           </div>
-          <Chart type="bar" data={rightChartData} options={rightChartOptions} />
+          <Chart data={rightChartData} options={rightChartOptions} />
         </div>
       </div>
 
