@@ -48,7 +48,7 @@ You can pull the Docker images for local testing or deployment:
 
 ```bash
 # Backend
-docker pull fullstacktest-backend
+docker pull mdrayhan03/fullstacktest-backend:latest
 
 # Frontend
-docker pull fullstacktest-frontend
+docker pull mdrayhan03/fullstacktest-frontend:latest
